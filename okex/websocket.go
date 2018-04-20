@@ -5,15 +5,17 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/leek-box/sheep/util"
 	"io/ioutil"
 	"math/rand"
 	"time"
 
+	"github.com/leek-box/sheep/util"
+
 	"math"
 
-	"github.com/bitly/go-simplejson"
 	"sync"
+
+	"github.com/bitly/go-simplejson"
 )
 
 // Endpoint 行情的Websocket入口
@@ -101,7 +103,7 @@ type Listener = func(topic string, json *simplejson.Json)
 // NewMarket 创建Market实例
 func NewMarket() (m *Market, err error) {
 	m = &Market{
-		HeartbeatInterval: 5 * time.Second,
+		HeartbeatInterval: 25 * time.Second,
 		ReceiveTimeout:    10 * time.Second,
 		ws:                nil,
 		autoReconnect:     true,
@@ -173,13 +175,8 @@ func (m *Market) sendMessage(data interface{}) error {
 // handleMessageLoop 处理消息循环
 func (m *Market) handleMessageLoop() {
 	m.ws.Listen(func(buf []byte) {
-		msg, err := unGzipData(buf)
-		fmt.Println("readMessage", string(msg))
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		json, err := simplejson.NewJson(msg)
+		fmt.Println("readMessage", string(buf))
+		json, err := simplejson.NewJson(buf)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -193,14 +190,15 @@ func (m *Market) handleMessageLoop() {
 
 		// 处理pong消息
 		if event := json.Get("event").MustString(); event == "pong" {
-			m.lastPing = time.Now().Unix()
+			m.lastPing = getUinxMillisecond()
 			return
 		}
 
 		// 处理订阅消息
-		if ch := json.Get("ch").MustString(); ch != "" {
+		if ch := json.GetIndex(0).Get("channel").MustString(); ch != "addChannel" {
 			m.mutex.RLock()
 			defer m.mutex.RUnlock()
+
 			listener, ok := m.listeners[ch]
 			if ok {
 				fmt.Println("handleSubscribe", json)
@@ -211,8 +209,9 @@ func (m *Market) handleMessageLoop() {
 		}
 
 		// 处理订阅成功通知
-		if subbed := json.Get("subbed").MustString(); subbed != "" {
-			c, ok := m.subscribeResultCb[subbed]
+		if subbed := json.GetIndex(0).Get("channel").MustString(); subbed == "addChannel" {
+			topic := json.GetIndex(0).Get("data").Get("channel").MustString()
+			c, ok := m.subscribeResultCb[topic]
 			if ok {
 				c <- json
 			}
@@ -250,7 +249,7 @@ func (m *Market) keepAlive() {
 		// 检查上次ping时间，如果超过20秒无响应，重新连接
 		tr := time.Duration(math.Abs(float64(t - m.lastPing)))
 		if tr >= m.HeartbeatInterval*2 {
-			fmt.Println("no ping max delay", tr, m.HeartbeatInterval*2, t, m.lastPing)
+			fmt.Println("no ping max delay ", tr, ">", m.HeartbeatInterval*2)
 			if m.autoReconnect {
 				err := m.reconnect()
 				if err != nil {
@@ -264,7 +263,7 @@ func (m *Market) keepAlive() {
 // handlePing 处理Ping
 func (m *Market) handlePing(ping pingPongData) (err error) {
 	fmt.Println("handlePing", ping)
-	m.lastPing = time.Now().Unix()
+	m.lastPing = getUinxMillisecond()
 	var pong = pingPongData{Event: "pong"}
 	err = m.sendMessage(pong)
 	if err != nil {
@@ -272,6 +271,10 @@ func (m *Market) handlePing(ping pingPongData) (err error) {
 	}
 	return nil
 }
+
+// func (m *Market) SubscribeOrderBook(symbol string, depth int32) (ob *common.Orderbook, err error) {
+
+// }
 
 // Subscribe 订阅
 func (m *Market) Subscribe(topic string, listener Listener) error {

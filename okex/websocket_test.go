@@ -12,7 +12,7 @@ import (
 
 func TestOrderBookGetInstance(t *testing.T) {
 	topicToSymbol := map[string]string{
-		"ok_sub_spot_bch_btc_depth_5": "BCHBTC",
+		"ok_sub_spot_btc_usdt_depth_5": "btcusdt",
 	}
 	orderbookManager, _ := common.NewOrderBookManager()
 	fmt.Println("shit")
@@ -27,6 +27,6 @@ func TestOrderBookGetInstance(t *testing.T) {
 		println("******** processed ****************")
 	}
 
-	h.Subscribe("ok_sub_spot_bch_btc_depth_5", spotOrderbookdepthListener)
+	h.Subscribe("ok_sub_spot_btc_usdt_depth_5", spotOrderbookdepthListener)
 	time.Sleep(time.Hour)
 }

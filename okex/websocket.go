@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/leek-box/sheep/util"
+	"github.com/bubble501/sheep/util"
 
 	"math"
 
@@ -123,7 +123,7 @@ func NewMarket() (m *Market, err error) {
 
 // connect 连接
 func (m *Market) connect() error {
-	fmt.Println("connecting")
+	//fmt.Println("connecting")
 	fmt.Println(Endpoint)
 	ws, err := util.NewSafeWebSocket(Endpoint)
 	if err != nil {

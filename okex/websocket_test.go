@@ -1,10 +1,12 @@
 package okex
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
+	"github.com/bubble501/sheep/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,16 +14,19 @@ func TestOrderBookGetInstance(t *testing.T) {
 	topicToSymbol := map[string]string{
 		"ok_sub_spot_bch_btc_depth_5": "BCHBTC",
 	}
-
+	orderbookManager, _ := common.NewOrderBookManager()
+	fmt.Println("shit")
 	h, err := NewMarket()
+	if err != nil {
+		println(err)
+	}
 	assert.Equal(t, err, nil)
 	spotOrderbookdepthListener := func(topic string, json *simplejson.Json) {
-		market := "okex"
 		symbol := topicToSymbol[topic]
-
+		orderbookManager.AddOrderBook("okex", symbol, json)
 		println("******** processed ****************")
 	}
 
-	h.Subscribe("ok_sub_spot_bch_btc_depth_5", listen)
+	h.Subscribe("ok_sub_spot_bch_btc_depth_5", spotOrderbookdepthListener)
 	time.Sleep(time.Hour)
 }

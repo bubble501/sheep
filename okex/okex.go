@@ -7,11 +7,8 @@ import (
 
 	"strconv"
 
-	"log"
-
 	"github.com/bubble501/sheep/consts"
 	"github.com/bubble501/sheep/proto"
-	"github.com/leizongmin/huobiapi"
 	"github.com/pkg/errors"
 )
 
@@ -183,17 +180,29 @@ func (o *OKEX) GetOrders(params *proto.OrdersParams) ([]proto.Order, error) {
 
 }
 
-func (h *OKEX) SubscribeDetail(symbols ...string) {
-	for _, symbol := range symbols {
-		h.market.Subscribe("ok_sub_spot_"+symbol+"_depth", func(topic string, j *huobiapi.JSON) {
-			js, _ := j.MarshalJSON()
-			log.Println(js)
+// func (h *OKEX) SubscribeDetail(symbols ...string) {
+// 	for _, symbol := range symbols {
+// 		h.market.Subscribe("ok_sub_spot_"+symbol+"_depth", func(topic string, j *huobiapi.JSON) {
+// 			js, _ := j.MarshalJSON()
+// 			log.Println(js)
 
-		})
+// 		})
+// 	}
+
+// }
+
+//SubscribeDepthDirect subscribe depth directly.
+func (o *OKEX) SubscribeDepthDirect(listener Listener, symbols ...string) {
+	converts := map[string]string{
+		"btcusdt": "btc_usdt",
 	}
 
+	for _, symbol := range symbols {
+		o.market.Subscribe("ok_sub_spot_"+converts[symbol]+"_depth_5", listener)
+	}
 }
 
+//NewOKEX create an instance of OKEX.
 func NewOKEX(apiKey, secretKey string) (*OKEX, error) {
 	o := &OKEX{
 		accessKey: apiKey,

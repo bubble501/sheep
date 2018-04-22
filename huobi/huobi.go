@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"fmt"
+
 	"github.com/leek-box/sheep/consts"
 	"github.com/leek-box/sheep/proto"
 	"github.com/leizongmin/huobiapi"
@@ -276,6 +277,13 @@ func (h *Huobi) SubscribeDepth(symbols ...string) {
 			}
 
 		})
+	}
+}
+
+//SubscribeDepthDirect subscribe depth directly.
+func (h *Huobi) SubscribeDepthDirect(listner Listener, symbols ...string) {
+	for _, symbol := range symbols {
+		h.market.Subscribe("market."+symbol+".depth.step0", listner)
 	}
 }
 

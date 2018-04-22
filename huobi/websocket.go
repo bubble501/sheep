@@ -174,7 +174,6 @@ func (m *Market) sendMessage(data interface{}) error {
 func (m *Market) handleMessageLoop() {
 	m.ws.Listen(func(buf []byte) {
 		msg, err := unGzipData(buf)
-		fmt.Println("readMessage", string(msg))
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -298,6 +297,12 @@ func (m *Market) Subscribe(topic string, listener Listener) error {
 		}
 	}
 	return nil
+}
+
+//SubscribeOrderDepth subscribe orderbook depth.
+func (m *Market) SubscribeOrderDepth(symbol string, listener Listener) error {
+	topic := "market." + symbol + ".depth.step0"
+	return m.Subscribe(topic, listener)
 }
 
 // Unsubscribe 取消订阅

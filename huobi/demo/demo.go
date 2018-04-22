@@ -1,45 +1,33 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"time"
 
+	simplejson "github.com/bitly/go-simplejson"
+	"github.com/bubble501/sheep/common"
 	"github.com/bubble501/sheep/huobi"
 )
 
 func main() {
-	h, err := huobi.NewHuobi("", "")
+
+	orderbookManager, _ := common.NewOrderBookManager()
+
+	topicToSymbol := map[string]string{
+		"market.btcusdt.depth.step0": "btcusdt",
+	}
+	fmt.Println("shit")
+	market, err := huobi.NewMarket()
 	if err != nil {
-		log.Println(err.Error())
-		return
+		println(err)
 	}
 
-	// 打开websocket通信
-	err = h.OpenWebsocket()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer h.CloseWebsocket()
-
-	// //获取账户余额
-	// balances, err := h.GetAccountBalance()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// log.Println(balances)
-
-	//webcosket监听函数
-	listen := func(symbol string, depth *huobi.MarketDepth) {
-		log.Println(depth)
+	spotOrderbookdepthListener := func(topic string, json *simplejson.Json) {
+		symbol := topicToSymbol[topic]
+		orderbookManager.AddOrderBook("huobi", symbol, json)
 	}
 
-	//设置监听
-	h.SetDepthlListener(listen)
-
-	//订阅
-	h.SubscribeDepth("btcusdt")
-	h.SubscribeDepth("ethusdt")
+	market.Subscribe("market.btcusdt.depth.step0", spotOrderbookdepthListener)
 
 	time.Sleep(time.Hour)
 }

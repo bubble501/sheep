@@ -5,15 +5,17 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/leek-box/sheep/util"
 	"io/ioutil"
 	"math/rand"
 	"time"
 
+	"github.com/leek-box/sheep/util"
+
 	"math"
 
-	"github.com/bitly/go-simplejson"
 	"sync"
+
+	"github.com/bitly/go-simplejson"
 )
 
 // Endpoint 行情的Websocket入口
@@ -172,7 +174,7 @@ func (m *Market) sendMessage(data interface{}) error {
 func (m *Market) handleMessageLoop() {
 	m.ws.Listen(func(buf []byte) {
 		msg, err := unGzipData(buf)
-		//fmt.Println("readMessage", string(msg))
+		fmt.Println("readMessage", string(msg))
 		if err != nil {
 			fmt.Println(err)
 			return

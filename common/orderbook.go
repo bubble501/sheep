@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -82,31 +83,43 @@ func (m *OrderBookManager) handleJSONAdd() {
 		data := chanItem.data.GetIndex(0).Get("data")
 		timestamp := chanItem.data.GetIndex(0).Get("timestamp").MustUint64()
 		asks := data.Get("asks")
-		length := len(asks.MustArray())
-		fmt.Printf("the length is %d", length)
-		m.mutex.Lock()
-		defer m.mutex.Unlock()
-		for i := 0; i < length; i++ {
-			pairs := asks.GetIndex(i).MustStringArray()
-			m.books[key].asks[i].price = pairs[0]
-			m.books[key].asks[i].volume = pairs[1]
-		}
-
 		bids := data.Get("bids")
-		length = len(bids.MustArray())
-
-		for i := 0; i < length; i++ {
-			pairs := bids.GetIndex(i).MustStringArray()
-			m.books[key].bids[i].price = pairs[0]
-			m.books[key].bids[i].volume = pairs[1]
-		}
-		m.books[key].ts = time.Unix(int64(timestamp), 0)
-		fmt.Printf("#########%+v\n", *m)
+		length := len(asks.MustArray())
+		m.updateOrderBook(key, asks, bids, int64(timestamp), length)
 	}
 }
 
-// func (m *OrderBookManager) String() string {
-// 	m.mutex.RLock()
-// 	defer m.mutex.RUnlock()
+func (m *OrderBookManager) updateOrderBook(key string, asks *simplejson.Json, bids *simplejson.Json, timestamp int64, length int) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	for i := 0; i < length; i++ {
+		ask := asks.GetIndex(i).MustStringArray()
+		bid := bids.GetIndex(i).MustStringArray()
+		m.books[key].asks[length-i-1].price = ask[0]
+		m.books[key].asks[length-i-1].volume = ask[1]
+		m.books[key].bids[i].price = bid[0]
+		m.books[key].bids[i].volume = bid[1]
 
-// }
+	}
+	m.books[key].ts = time.Unix(timestamp, 0)
+	fmt.Println(m)
+	return nil
+}
+
+func (m *OrderBookManager) String() string {
+	result := make([]string, 0)
+	for k, v := range m.books {
+		result = append(result, k)
+		for i, ask := range v.asks {
+			line := "ask" + strconv.Itoa(i) + "[" + ask.price + "," + ask.volume + "]"
+			result = append(result, line)
+		}
+
+		for i, bid := range v.bids {
+			line := "bid" + strconv.Itoa(i) + "[" + bid.price + "," + bid.volume + "]"
+			result = append(result, line)
+		}
+
+	}
+	return strings.Join(result, "\n")
+}

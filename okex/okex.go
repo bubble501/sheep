@@ -192,7 +192,7 @@ func (o *OKEX) GetOrders(params *proto.OrdersParams) ([]proto.Order, error) {
 // }
 
 //SubscribeDepthDirect subscribe depth directly.
-func (o *OKEX) SubscribeDepthDirect(listener Listener, symbols ...string) {
+func (o *OKEX) SubscribeDepthDirect(listener Listener, symbols []string) {
 	converts := map[string]string{
 		"btcusdt": "btc_usdt",
 	}

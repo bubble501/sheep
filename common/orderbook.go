@@ -33,12 +33,19 @@ type JSONAddOrderBook struct {
 
 type JsonAddOrderBookChan = chan JSONAddOrderBook
 
+type NewOrderEventHandler interface {
+    handleNewOrder(oderbook *JSONAddOrderBook)
+}
+
 //OrderBookManager is used to manage all orderbooks.
 type OrderBookManager struct {
 	mutex *sync.RWMutex
 	//the key is the join of market and symbol with ":"
 	books       map[string]*OrderBook
 	jsonAddChan JsonAddOrderBookChan
+	noeHandler NewOrderEventHandler 
+	markets  []string
+	symbols []string
 }
 
 // NewOrderBookManager create OrderBookManager.
@@ -48,18 +55,29 @@ func NewOrderBookManager() (manager *OrderBookManager, err error) {
 		jsonAddChan: make(JsonAddOrderBookChan, 100),
 		mutex:       &sync.RWMutex{},
 	}
-
-	manager.books["huobi:btcusdt"] = &OrderBook{
-		bids: make([]Order, OrderBookDepth),
-		asks: make([]Order, OrderBookDepth),
-	}
-
-	manager.books["okex:btcusdt"] = &OrderBook{
-		bids: make([]Order, OrderBookDepth),
-		asks: make([]Order, OrderBookDepth),
-	}
 	go manager.handleJSONAdd()
 	return manager, nil
+}
+
+func (m *OrderBookManager) SubscirbeNewOrderEvent(handler NewOrderEventHandler) {
+	m.noeHandler = handler
+}
+
+
+func (m *OrderBookManager) InitBook(markets []string, pairs []string) {
+	m.markets = make([]string, len(markets))
+	m.symbols = make([]string, len(pairs))
+	copy(m.markets, markets)
+	copy(m.symbols, pairs)
+	for _,  market:= range markets {
+		for _, pair := range pairs {
+			key := market + ":" + pair
+			m.books[key] = &OrderBook {
+				bids: make([]Order, OrderBookDepth),
+				asks: make([]Order, OrderBookDepth),
+			}
+		}
+	}
 }
 
 //AddOrderBook add orderbook according specified market and symbol.
@@ -83,7 +101,7 @@ func (m *OrderBookManager) handleJSONAdd() {
 		case "huobi":
 			m.handleHuobiJSONAdd(&chanItem)
 		}
-
+		m.noeHandler.handleNewOrder(&chanItem) 
 	}
 }
 
@@ -105,9 +123,7 @@ func (m *OrderBookManager) handleHuobiJSONAdd(chanItem *JSONAddOrderBook) {
 	m.updateHuobiOrderBook(key, asks, bids, timestamp, length)
 }
 
-// func FloatToString(input float64) string{
-// 	return strconv.For
-// }
+ 
 
 func (m *OrderBookManager) updateHuobiOrderBook(key string, asks *simplejson.Json, bids *simplejson.Json, timestamp int64, length int) error {
 	m.mutex.Lock()

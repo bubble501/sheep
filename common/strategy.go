@@ -7,6 +7,12 @@ type Arbitrator struct {
 	orderBookManager *OrderBookManager
 }
 
+func(m *Arbitrator) handleNewOrder(orderbook *JSONAddOrderBook) {
+	symbol := orderbook.symbol
+	market := orderbook.market
+	m.orderBookManager.books;
+}
+
 // Run start an go thread to find opportunity.
 func (m *Arbitrator) Run() error {
 

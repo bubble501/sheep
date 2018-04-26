@@ -45,25 +45,26 @@ func createListener(market string, manager *common.OrderBookManager) func(topic 
 }
 
 func main() {
-
+	markets := []string{"okex", "huobi"}
+	symbols := []string{"btcusdt", "ethusdt"}
 	orderbookManager, _ := common.NewOrderBookManager()
-	symbol := "btcusdt"
-
+	orderbookManager.InitBook(markets, symbols)
+	
+ 
 	hb, err := huobi.NewHuobi("", "")
 	if err != nil {
 		println(err)
 	}
 
-	err = hb.OpenWebsocket()
+	hb.SubscribeDepthDirect(createListener("huobi", orderbookManager), symbols)
+
+
+	ok, err := okex.NewOKEX("", "")
 	if err != nil {
 		println(err)
 	}
 
-	hb.SubscribeDepthDirect(createListener("huobi", orderbookManager), symbol)
-
-	ok, err := okex.NewOKEX("", "")
-
-	ok.SubscribeDepthDirect(createListener("okex", orderbookManager), symbol)
+	ok.SubscribeDepthDirect(createListener("okex", orderbookManager), symbols)
 
 	time.Sleep(time.Hour)
 }

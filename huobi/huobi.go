@@ -280,10 +280,19 @@ func (h *Huobi) SubscribeDepth(symbols ...string) {
 	}
 }
 
+func symbolToTopic(symbol string, category string) (string) {
+	switch(category){
+	case "depth":
+		return "market." + symbol + ".depth.step0"
+	}
+	return ""
+}
+
+
 //SubscribeDepthDirect subscribe depth directly.
-func (h *Huobi) SubscribeDepthDirect(listner Listener, symbols ...string) {
+func (h *Huobi) SubscribeDepthDirect(listner Listener, symbols []string) {
 	for _, symbol := range symbols {
-		h.market.Subscribe("market."+symbol+".depth.step0", listner)
+		h.market.Subscribe(symbolToTopic(symbol, "depth"), listner)
 	}
 }
 
@@ -312,6 +321,11 @@ func NewHuobi(accesskey, secretkey string) (*Huobi, error) {
 
 		}
 	}
+	err := h.OpenWebsocket()
+	if err != nil {
+		println(err)
+	}
+
 
 	log.Println("init huobi success.")
 

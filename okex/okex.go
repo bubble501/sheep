@@ -195,6 +195,7 @@ func (o *OKEX) GetOrders(params *proto.OrdersParams) ([]proto.Order, error) {
 func (o *OKEX) SubscribeDepthDirect(listener Listener, symbols []string) {
 	converts := map[string]string{
 		"btcusdt": "btc_usdt",
+		"ethusdt": "eth_usdt",
 	}
 
 	for _, symbol := range symbols {

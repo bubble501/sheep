@@ -34,7 +34,7 @@ type JSONAddOrderBook struct {
 type JsonAddOrderBookChan = chan JSONAddOrderBook
 
 type NewOrderEventHandler interface {
-    handleNewOrder(oderbook *JSONAddOrderBook)
+	handleNewOrder(oderbook *JSONAddOrderBook)
 }
 
 //OrderBookManager is used to manage all orderbooks.
@@ -43,9 +43,9 @@ type OrderBookManager struct {
 	//the key is the join of market and symbol with ":"
 	books       map[string]*OrderBook
 	jsonAddChan JsonAddOrderBookChan
-	noeHandler NewOrderEventHandler 
-	markets  []string
-	symbols []string
+	noeHandler  NewOrderEventHandler
+	markets     []string
+	symbols     []string
 }
 
 // NewOrderBookManager create OrderBookManager.
@@ -63,16 +63,15 @@ func (m *OrderBookManager) SubscirbeNewOrderEvent(handler NewOrderEventHandler) 
 	m.noeHandler = handler
 }
 
-
 func (m *OrderBookManager) InitBook(markets []string, pairs []string) {
 	m.markets = make([]string, len(markets))
 	m.symbols = make([]string, len(pairs))
 	copy(m.markets, markets)
 	copy(m.symbols, pairs)
-	for _,  market:= range markets {
+	for _, market := range markets {
 		for _, pair := range pairs {
 			key := market + ":" + pair
-			m.books[key] = &OrderBook {
+			m.books[key] = &OrderBook{
 				bids: make([]Order, OrderBookDepth),
 				asks: make([]Order, OrderBookDepth),
 			}
@@ -101,7 +100,7 @@ func (m *OrderBookManager) handleJSONAdd() {
 		case "huobi":
 			m.handleHuobiJSONAdd(&chanItem)
 		}
-		m.noeHandler.handleNewOrder(&chanItem) 
+		m.noeHandler.handleNewOrder(&chanItem)
 	}
 }
 
@@ -123,8 +122,6 @@ func (m *OrderBookManager) handleHuobiJSONAdd(chanItem *JSONAddOrderBook) {
 	m.updateHuobiOrderBook(key, asks, bids, timestamp, length)
 }
 
- 
-
 func (m *OrderBookManager) updateHuobiOrderBook(key string, asks *simplejson.Json, bids *simplejson.Json, timestamp int64, length int) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -145,7 +142,7 @@ func (m *OrderBookManager) updateHuobiOrderBook(key string, asks *simplejson.Jso
 	}
 	m.books[key].length = length
 	m.books[key].ts = time.Unix(timestamp, 0)
-	fmt.Println(m)
+	//fmt.Println(m)
 	return nil
 }
 
@@ -176,7 +173,7 @@ func (m *OrderBookManager) updateOrderBook(key string, asks *simplejson.Json, bi
 	}
 	m.books[key].ts = time.Unix(timestamp, 0)
 	m.books[key].length = length
-	fmt.Println(m)
+	//fmt.Println(m)
 	return nil
 }
 
